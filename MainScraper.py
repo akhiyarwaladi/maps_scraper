@@ -79,7 +79,7 @@ def searchForPlace(url, typeOfPlace):
 
     placesResults = []
     # save the search results into a dictionary
-    for el in response.xpath('//div[contains(@aria-label, "Results for")]/div/div[./a]'):
+    for el in response.xpath('//div[contains(@aria-label, "Hasil untuk")]/div/div[./a]'):
         placesResults.append({
             'link': el.xpath('./a/@href').extract_first(''),
             'title': el.xpath('./a/@aria-label').extract_first(''),
