@@ -241,7 +241,7 @@ if __name__ == "__main__":
             insert_alfabi_temp(
                 'alfagift_store_competitor',
                 df,
-                if_exists='replace'
+                if_exists='append'
             )
 
             #df.to_csv('database/' + typeOfPlace + '_v1.csv', index=False)
