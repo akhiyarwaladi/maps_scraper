@@ -185,7 +185,7 @@ if __name__ == "__main__":
             progressCounter += 1
             print("progress: " + str(round(100 * progressCounter / len(urls), 2)) + "%")
             
-            time.sleep(1000)
+            #time.sleep(1000)
 
         df = pd.DataFrame(list_of_places)
         df.to_csv('database/' + typeOfPlace + '_v0.csv', index=False)
