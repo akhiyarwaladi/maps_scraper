@@ -136,6 +136,31 @@ def closeDriver():
     driver.quit()
 
 
+def get_done():
+
+    from sqlalchemy import event,create_engine,types
+    engine_stmt = "oracle://%s:%s@%s/%s" % ( 
+        'report', 
+        'justd0it',
+        '10.234.152.61',
+        'alfabi' 
+    )
+    q = '''
+    SELECT DISTINCT(STORE) STORE
+    FROM report.alfagift_store_competitor
+
+    '''
+
+    engine = create_engine(engine_stmt)
+    con = engine.connect()
+
+    df_log = pd.read_sql_query(q, con)
+    li_store = list(df_log['store'])
+    con.close()
+    
+    return li_store
+
+
 def generateUrls(typeOfPlace):
     """
     This function generated urls which are used during searching for places of specific type.
@@ -146,6 +171,11 @@ def generateUrls(typeOfPlace):
     pointsDirectory = "generatedPoints/"
     points_df = pd.read_csv(pointsDirectory + "Points_alfamart.csv", index_col=False)
 
+    print('SEMUA POINTS {}'.format(points_df.shape[0]))
+    li_done = get_done()
+
+    points_df = points_df[~points_df['store'].isin(li_done)]
+    print('SEMUA POINTS YANG BELUM {}'.format(points_df.shape[0]))
     base = 'https://www.google.com/maps/search/'
 
     generated_urls = []
@@ -217,34 +247,43 @@ if __name__ == "__main__":
 
         urls,store = generateUrls(typeOfPlace)
 
+        #break
+
         print("total number of points to check:" + str(len(urls)))
 
 
         progressCounter = 0
         for idx, url in enumerate(urls):
             
-            list_of_places = []
-            new_places = searchForPlace(url, typeOfPlace)
-            list_of_places += new_places  # concat two lists
-            progressCounter += 1
-            print("progress: " + str(round(100 * progressCounter / len(urls), 2)) + "%")
-            
+            try:
 
-            df = pd.DataFrame(list_of_places)
-            # df.to_csv('database/' + typeOfPlace + '_v0.csv', index=False)
-            df = df.drop_duplicates()
-            df = addLonLatToDataFrame(df)
+                list_of_places = []
+                new_places = searchForPlace(url, typeOfPlace)
+                list_of_places += new_places  # concat two lists
+                progressCounter += 1
+                print("progress: " + str(round(100 * progressCounter / len(urls), 2)) + "%")
+                
 
-            df['store'] = store[idx]
-            df = df.astype(str)
+                df = pd.DataFrame(list_of_places)
+                # df.to_csv('database/' + typeOfPlace + '_v0.csv', index=False)
+                df = df.drop_duplicates()
+                df = addLonLatToDataFrame(df)
 
-            print("number of places:" + str(df.shape[0]))
+                df['store'] = store[idx]
+                df = df.astype(str)
 
-            insert_alfabi_temp(
-                'alfagift_store_competitor',
-                df,
-                if_exists='append'
-            )
+                print("number of places:" + str(df.shape[0]))
+
+                insert_alfabi_temp(
+                    'alfagift_store_competitor',
+                    df,
+                    if_exists='append'
+                )
+
+            except Exception as e:
+                time.sleep(1)
+
+                continue
 
             #df.to_csv('database/' + typeOfPlace + '_v1.csv', index=False)
             #break
