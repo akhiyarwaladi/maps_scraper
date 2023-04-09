@@ -6,6 +6,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
 from parsel import Selector
+from sqlalchemy import event,create_engine,types
 import re
 import time
 import sys
@@ -66,8 +67,8 @@ def searchForPlace(url, typeOfPlace):
     driver.get(url)
 
     # only at the first page click the "accept all" ("zaakceptuj wszystko") button
-    if not googleAcceptButtonClicked:
-        print('Clicked')
+    #if not googleAcceptButtonClicked:
+        #print('Clicked')
         #clickAcceptAllButton()
 
     # scroll down left menu
@@ -148,16 +149,57 @@ def generateUrls(typeOfPlace):
     base = 'https://www.google.com/maps/search/'
 
     generated_urls = []
+    generated_store = []
 
     for index, row in points_df.iterrows():
         point_lat = points_df.at[index, 'lat']
         point_lon = points_df.at[index, 'lon']
+        point_store = points_df.at[index, 'store']
         zoom = 16
         url = base
         url += str(typeOfPlace) + '/@'
         url += str(point_lat) + ',' + str(point_lon) + ',' + str(zoom) + 'z'
         generated_urls.append(url)
-    return generated_urls
+        generated_store.append(point_store)
+    return generated_urls,generated_store
+
+
+def insert_alfabi_temp(name_temp, df_insert, if_exists="replace"):
+    try:
+
+        
+        engine_stmt = "oracle://%s:%s@%s/%s" % ( 
+            'report', 
+            'justd0it',
+            '10.234.152.61',
+            'alfabi' 
+        )
+
+
+        engine = create_engine(engine_stmt)
+
+
+        dtype = {
+            c:types.VARCHAR(df_insert[c].str.len().max()) 
+            for c in df_insert.columns[df_insert.dtypes == 'object'].tolist()
+        }
+        df_insert.to_sql(
+            name=name_temp, 
+            con=engine, 
+            index=False, 
+            if_exists=if_exists,
+            dtype=dtype
+        )
+
+        print('done inserting {} data'.format(df_insert.shape[0]))
+
+        engine.dispose()
+        return 0
+
+    except Exception as e:
+        print('Exception {}'.format(e))
+        return e
+
 
 
 if __name__ == "__main__":
@@ -173,28 +215,36 @@ if __name__ == "__main__":
     print(types_of_places)
     for typeOfPlace in types_of_places:
 
-        urls = generateUrls(typeOfPlace)
+        urls,store = generateUrls(typeOfPlace)
 
         print("total number of points to check:" + str(len(urls)))
 
         list_of_places = []
         progressCounter = 0
-        for url in urls:
+        for idx, url in enumerate(urls):
             new_places = searchForPlace(url, typeOfPlace)
             list_of_places += new_places  # concat two lists
             progressCounter += 1
             print("progress: " + str(round(100 * progressCounter / len(urls), 2)) + "%")
             
-            time.sleep(1000)
+            # time.sleep(1000)
 
-        df = pd.DataFrame(list_of_places)
-        df.to_csv('database/' + typeOfPlace + '_v0.csv', index=False)
-        df = df.drop_duplicates()
-        df = addLonLatToDataFrame(df)
+            df = pd.DataFrame(list_of_places)
+            # df.to_csv('database/' + typeOfPlace + '_v0.csv', index=False)
+            df = df.drop_duplicates()
+            df = addLonLatToDataFrame(df)
+            df['store'] = store[idx]
 
-        print("number of places:" + str(df.shape[0]))
+            print("number of places:" + str(df.shape[0]))
 
-        df.to_csv('database/' + typeOfPlace + '_v1.csv', index=False)
+            insert_alfabi_temp(
+                'alfagift_store_competitor',
+                df,
+                if_exists='replace'
+            )
+
+            #df.to_csv('database/' + typeOfPlace + '_v1.csv', index=False)
+            break
 
     closeDriver()
 
