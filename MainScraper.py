@@ -219,9 +219,11 @@ if __name__ == "__main__":
 
         print("total number of points to check:" + str(len(urls)))
 
-        list_of_places = []
+
         progressCounter = 0
         for idx, url in enumerate(urls):
+            
+            list_of_places = []
             new_places = searchForPlace(url, typeOfPlace)
             list_of_places += new_places  # concat two lists
             progressCounter += 1
