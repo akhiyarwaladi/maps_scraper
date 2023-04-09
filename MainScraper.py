@@ -15,10 +15,11 @@ googleAcceptButtonClicked = False
 
 # setUpWebDriver
 options = webdriver.ChromeOptions()
-options.add_argument('headless')  # Make browser open in background
-# driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
-driver = webdriver.Chrome(ChromeDriverManager().install())
-
+#options.add_argument('headless')  # Make browser open in background
+options.add_argument('--start-maximized')
+options.add_argument('--disable-dev-shm-usage')
+driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+# driver = webdriver.Chrome(ChromeDriverManager().install())
 
 def check_exists_by_xpath(xpath):
     """
@@ -66,7 +67,8 @@ def searchForPlace(url, typeOfPlace):
 
     # only at the first page click the "accept all" ("zaakceptuj wszystko") button
     if not googleAcceptButtonClicked:
-        clickAcceptAllButton()
+        print('Clicked')
+        #clickAcceptAllButton()
 
     # scroll down left menu
     scrollDownLeftMenuOnGoogleMaps(counter=3, waitingTime=2)
@@ -84,6 +86,7 @@ def searchForPlace(url, typeOfPlace):
             'type': typeOfPlace
         })
 
+    print(placesResults)
     return placesResults
 
 
@@ -140,7 +143,7 @@ def generateUrls(typeOfPlace):
     :return: list of generated URLs containing type of place, searched location, and zoom of searching
     """
     pointsDirectory = "generatedPoints/"
-    points_df = pd.read_csv(pointsDirectory + "Points_size_15r_15c_optimized.csv", index_col=False)
+    points_df = pd.read_csv(pointsDirectory + "Points_alfamart.csv", index_col=False)
 
     base = 'https://www.google.com/maps/search/'
 
@@ -165,7 +168,7 @@ if __name__ == "__main__":
     types_of_places = sys.argv[1:]
 
     if len(types_of_places) == 0:
-        types_of_places = ['bar', 'cinema', 'office']  # set the types of searched places
+        types_of_places = ['indomaret']  # set the types of searched places
 
     print(types_of_places)
     for typeOfPlace in types_of_places:
@@ -181,9 +184,11 @@ if __name__ == "__main__":
             list_of_places += new_places  # concat two lists
             progressCounter += 1
             print("progress: " + str(round(100 * progressCounter / len(urls), 2)) + "%")
+            
+            time.sleep(1000)
 
         df = pd.DataFrame(list_of_places)
-
+        df.to_csv('database/' + typeOfPlace + '_v0.csv', index=False)
         df = df.drop_duplicates()
         df = addLonLatToDataFrame(df)
 
