@@ -72,7 +72,7 @@ def searchForPlace(url, typeOfPlace):
         #clickAcceptAllButton()
 
     # scroll down left menu
-    scrollDownLeftMenuOnGoogleMaps(counter=3, waitingTime=2)
+    scrollDownLeftMenuOnGoogleMaps(counter=4, waitingTime=2)
 
     # get the source code of the page
     page_content = driver.page_source
@@ -164,7 +164,7 @@ def generateUrls(typeOfPlace):
     return generated_urls,generated_store
 
 
-def insert_alfabi_temp(name_temp, df_insert, if_exists="replace"):
+def insert_alfabi_temp(name_temp, df_insert, if_exists="append"):
     try:
 
         
