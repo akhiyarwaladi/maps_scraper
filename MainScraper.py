@@ -232,8 +232,9 @@ if __name__ == "__main__":
             # df.to_csv('database/' + typeOfPlace + '_v0.csv', index=False)
             df = df.drop_duplicates()
             df = addLonLatToDataFrame(df)
-            df['store'] = store[idx]
 
+            df['store'] = store[idx]
+            df = df.astype(str)
 
             print("number of places:" + str(df.shape[0]))
 
