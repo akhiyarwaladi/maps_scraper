@@ -245,7 +245,7 @@ if __name__ == "__main__":
             )
 
             #df.to_csv('database/' + typeOfPlace + '_v1.csv', index=False)
-            break
+            #break
 
     closeDriver()
 
